@@ -141,9 +141,9 @@ const classData = {
 
 ## 授權
 
-資料整理／分析：Mars Liu (姬柊雪菜我老婆)
-資料來源：Shadowverse World Beyond（Cygames）
-卡牌圖像© Cygames，僅供非營利學術分析使用
+資料整理／分析：Mars Liu (姬柊雪菜我老婆)  
+資料來源：Shadowverse World Beyond（Cygames）  
+卡牌圖像© Cygames，僅供非營利學術分析使用  
 
 ## 聯絡資訊
 
