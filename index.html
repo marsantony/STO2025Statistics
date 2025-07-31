@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>職業與卡牌統計儀表板</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>職業與卡牌統計儀表板</h1>
+            
+        </header>
+
+        <div class="charts-section" id="classChartsSection">
+            <div class="chart-container">
+                <h3>職業分布圓餅圖</h3>
+                <canvas id="pieChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>職業統計圖表</h3>
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <div class="class-cards-row">
+            <div class="class-cards" id="classCards">
+                <!-- 職業卡片將由JavaScript動態生成 -->
+            </div>
+        </div>
+
+        <div class="charts-section" id="cardChartsSection">
+            <div class="chart-container">
+                <h3 id="cardPieTitle">全部牌分布圓餅圖</h3>
+                <canvas id="cardPieChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3 id="cardBarTitle">全部牌統計圖表</h3>
+                <canvas id="cardBarChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card-stats-section">
+            <div class="card-stats-header">
+                <h3>卡片使用統計</h3>
+                <div class="stats-summary">
+                    <span class="total-cards">總卡片種類: <span id="totalCardTypes">0</span></span>
+                    <span class="shared-cards">共用卡片: <span id="sharedCards">0</span></span>
+                </div>
+            </div>
+            <div class="card-list-container">
+                <div class="card-list" id="cardList">
+                    <!-- 卡片列表將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer style="margin-top:40px; text-align:center; color:#888; font-size:0.95em; line-height:1.7;">
+        資料整理／分析：Mars Liu (姬柊雪菜我老婆)<br>
+        資料來源：Shadowverse World Beyond（Cygames）<br>
+        卡牌圖像© Cygames，僅供非營利學術分析使用
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
