@@ -149,45 +149,23 @@ function updateCardCharts(selectedClass) {
     if (selectedClass !== 'all') {
         filteredCards = cardData.filter(card => card.class === selectedClass || card.class === 'shared');
     }
-    // 更新下方圓餅圖
     const pieLabels = filteredCards.map(card => card.名稱);
     const pieData = filteredCards.map(card => card.數量);
-    const pieColors = filteredCards.map(card => classData[selectedClass]?.color || '#888');
+    // 顏色：全部時用 chartColors，單職業時用職業色
+    const pieColors = selectedClass === 'all'
+        ? filteredCards.map((_, i) => chartColors[i % chartColors.length])
+        : filteredCards.map(card => classData[selectedClass]?.color || '#888');
     cardPieChart.data.labels = pieLabels;
     cardPieChart.data.datasets[0].data = pieData;
     cardPieChart.data.datasets[0].backgroundColor = pieColors;
     cardPieChart.update('none');
-    // 更新下方長條圖
+    // 長條圖同理
     cardBarChart.data.labels = pieLabels;
     cardBarChart.data.datasets[0].data = pieData;
     cardBarChart.data.datasets[0].backgroundColor = pieColors;
     cardBarChart.data.datasets[0].borderColor = pieColors;
     cardBarChart.update('none');
-    // 更新標題
-    document.getElementById('cardPieTitle').textContent = selectedClass === 'all' ? '全部牌分布圓餅圖' : `${classData[selectedClass]?.name || ''}牌分布圓餅圖`;
-    document.getElementById('cardBarTitle').textContent = selectedClass === 'all' ? '全部牌統計圖表' : `${classData[selectedClass]?.name || ''}牌統計圖表`;
-}
-
-function updateCardCharts(selectedClass) {
-    let filteredCards = cardData;
-    if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => card.class === selectedClass || card.class === 'shared');
-    }
-    // 更新下方圓餅圖
-    const pieLabels = filteredCards.map(card => card.名稱);
-    const pieData = filteredCards.map(card => card.數量);
-    const pieColors = filteredCards.map(card => classData[selectedClass]?.color || '#888');
-    cardPieChart.data.labels = pieLabels;
-    cardPieChart.data.datasets[0].data = pieData;
-    cardPieChart.data.datasets[0].backgroundColor = pieColors;
-    cardPieChart.update('none');
-    // 更新下方長條圖
-    cardBarChart.data.labels = pieLabels;
-    cardBarChart.data.datasets[0].data = pieData;
-    cardBarChart.data.datasets[0].backgroundColor = pieColors;
-    cardBarChart.data.datasets[0].borderColor = pieColors;
-    cardBarChart.update('none');
-    // 更新標題
+    // 標題
     document.getElementById('cardPieTitle').textContent = selectedClass === 'all' ? '全部牌分布圓餅圖' : `${classData[selectedClass]?.name || ''}牌分布圓餅圖`;
     document.getElementById('cardBarTitle').textContent = selectedClass === 'all' ? '全部牌統計圖表' : `${classData[selectedClass]?.name || ''}牌統計圖表`;
 }
@@ -379,6 +357,13 @@ function createCardBarChart() {
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 }
+
+const chartColors = [
+  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+  '#C9CBCF', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+  '#FF9F40', '#C9CBCF', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+  '#9966FF', '#FF9F40'
+]
 
 // 更新圖表
 function updateCharts(selectedClass) {
