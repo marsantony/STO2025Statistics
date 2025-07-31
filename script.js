@@ -302,7 +302,7 @@ function createBarChart() {
     const data = {
         labels: classKeys.map(k => classData[k].name),
         datasets: [{
-            label: '卡片數量',
+            label: '數量',
             data: classKeys.map(k => classData[k].count),
             backgroundColor: classKeys.map(k => classData[k].color),
             borderColor: classKeys.map(k => classData[k].color),
