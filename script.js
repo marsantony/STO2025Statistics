@@ -102,7 +102,6 @@ function initializeApp() {
 function setupIncludeNeutralCheckbox() {
     const label = document.getElementById('includeNeutralLabel');
     const checkbox = document.getElementById('includeNeutralCheckbox');
-    // 初始隱藏
     label.style.display = 'none';
     checkbox.checked = false;
     includeNeutral = false;
@@ -110,6 +109,7 @@ function setupIncludeNeutralCheckbox() {
         includeNeutral = checkbox.checked;
         renderCardList();
         updateCardStats(getFilteredCards());
+        updateCardCharts(selectedClass); // ← 新增這行
     });
 }
 // 獲取過濾後的卡片數據
@@ -204,10 +204,7 @@ function selectClass(className) {
 }
 
 function updateCardCharts(selectedClass) {
-    let filteredCards = cardData;
-    if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => card.class === selectedClass);
-    }
+    let filteredCards = getFilteredCards(); // ← 改這裡
     const pieLabels = filteredCards.map(card => card.名稱);
     const pieData = filteredCards.map(card => card.數量);
     // 顏色：全部時用 chartColors，單職業時用職業色
