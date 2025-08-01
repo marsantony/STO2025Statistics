@@ -1,54 +1,63 @@
 // 職業數據
 const classData = {
     all: {
+        id:-1,
         name: '全部',
         count: 2844,
         image: '',
         color: '#ffffff'
     },
     neutral: {
+        id: 0,
         name: '中立',
         count: 0,
         image: 'images/class_neutral.svg',
         color: '#95a5a6'
     },
     elf: {
+        id: 1,
         name: '精靈',
         count: 288,
         image: 'images/class_elf.svg',
         color: '#27ae60'
     },
     royal: {
+        id: 2,
         name: '皇家護衛',
         count: 743,
         image: 'images/class_royal.svg',
         color: '#e74c3c'
     },
     witch: {
+        id: 3,
         name: '巫師',
         count: 852,
         image: 'images/class_witch.svg',
         color: '#3498db'
     },
     dragon: {
+        id: 4,
         name: '龍族',
         count: 76,
         image: 'images/class_dragon.svg',
         color: '#f39c12'
     },
     nightmare: {
+        id: 5,
         name: '夜魔',
         count: 462,
         image: 'images/class_nightmare.svg',
         color: '#9b59b6'
     },
     bishop: {
+        id: 6,
         name: '主教',
         count: 179,
         image: 'images/class_bishop.svg',
         color: '#f1c40f'
     },
     nemesis: {
+        id: 7,
         name: '復仇者',
         count: 244,
         image: 'images/class_nemesis.svg',
@@ -58,6 +67,7 @@ const classData = {
 
 // 當前選中的職業
 let selectedClass = 'all';
+let includeNeutral = false;
 
 // 圖表實例
 let pieChart = null;
@@ -86,6 +96,51 @@ function initializeApp() {
     renderClassCards();
     createCharts();
     loadCardData(); // 載入卡片數據
+    setupIncludeNeutralCheckbox();
+}
+
+function setupIncludeNeutralCheckbox() {
+    const label = document.getElementById('includeNeutralLabel');
+    const checkbox = document.getElementById('includeNeutralCheckbox');
+    // 初始隱藏
+    label.style.display = 'none';
+    checkbox.checked = false;
+    includeNeutral = false;
+    checkbox.addEventListener('change', function() {
+        includeNeutral = checkbox.checked;
+        renderCardList();
+        updateCardStats(getFilteredCards());
+    });
+}
+// 獲取過濾後的卡片數據
+function getFilteredCards() {
+    let filteredCards = cardData;
+    if (selectedClass !== 'all') {
+        filteredCards = cardData.filter(card => card.class === selectedClass);
+        if (includeNeutral && selectedClass !== 'neutral') {
+            const classNum = String(Object.entries(classMap).find(([k, v]) => v === selectedClass)?.[0]);
+            const neutralCards = cardData
+                .filter(card => card.class === 'neutral' && card.byclass && card.byclass[classNum])
+                .map(card => {
+                    const by = card.byclass[classNum];
+                    return {
+                        ...card,
+                        數量: by.count || 0,
+                        帶3: by.帶3 || 0,
+                        帶2: by.帶2 || 0,
+                        帶1: by.帶1 || 0,
+                        帶0: by.帶0 || 0,
+                        _isNeutralByClass: true,
+                        byclass: selectedClass // 添加 byclass 欄位
+                    };
+                })
+                .filter(card => card.數量 > 0); // 這裡過濾掉數量為0的
+            filteredCards = filteredCards.concat(neutralCards);
+        }
+    }
+    // 依照數量由大到小排序
+    filteredCards = filteredCards.slice().sort((a, b) => b.數量 - a.數量);
+    return filteredCards;
 }
 
 // 渲染職業卡片
@@ -133,13 +188,17 @@ function selectClass(className) {
 
     // 更新選中的職業
     selectedClass = className;
-
-    // 根據選擇的職業過濾卡片
-    let filteredCards = cardData;
-    if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => card.class === selectedClass || card.class === 'shared');
+    // 顯示/隱藏勾選框
+    const label = document.getElementById('includeNeutralLabel');
+    if (className !== 'all' && className !== 'neutral') {
+        label.style.display = 'flex';
+    } else {
+        label.style.display = 'none';
+        includeNeutral = false;
+        document.getElementById('includeNeutralCheckbox').checked = false;
     }
-    updateCardStats(filteredCards);
+    // 根據選擇的職業過濾卡片
+    updateCardStats(getFilteredCards());
     updateCardCharts(className);
     renderCardList();
 }
@@ -147,7 +206,7 @@ function selectClass(className) {
 function updateCardCharts(selectedClass) {
     let filteredCards = cardData;
     if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => card.class === selectedClass || card.class === 'shared');
+        filteredCards = cardData.filter(card => card.class === selectedClass);
     }
     const pieLabels = filteredCards.map(card => card.名稱);
     const pieData = filteredCards.map(card => card.數量);
@@ -186,7 +245,9 @@ async function loadCardData() {
             帶3: card.帶3 || 0,
             帶2: card.帶2 || 0,
             帶1: card.帶1 || 0,
+            byclass: card.byclass || undefined // ← 加這行
         }));
+
         // 依照數量由大到小排序
         cardData.sort((a, b) => b.數量 - a.數量);
         updateCardStats(cardData);
@@ -211,32 +272,32 @@ function updateCardStats(filteredCards) {
 // 渲染卡片列表
 function renderCardList() {
     const cardList = document.getElementById('cardList');
-
-    // 添加載入狀態
     cardList.classList.add('loading');
-
-    // 根據選中的職業過濾卡片
-    let filteredCards = cardData;
-    if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => {
-            return card.class === selectedClass || card.class === 'shared';
-        });
-    }
-
-    // 清空並重新渲染
+    let filteredCards = getFilteredCards();
     cardList.innerHTML = '';
     filteredCards.forEach(card => {
-        // 計算帶0
-        let total = 0;
-        if (card.class === 'neutral') {
-            total = classData['all']?.count || 0;
+        let c3, c2, c1, c0, count;
+        if (card._isNeutralByClass) {
+            count = card.數量;
+            c3 = card.帶3 || 0;
+            c2 = card.帶2 || 0;
+            c1 = card.帶1 || 0;
+            let total = 0;
+            total = classData[card.byclass]?.count || 0;
+            c0 = Math.max(0, total - c1 - c2 - c3);
         } else {
-            total = classData[card.class]?.count || 0;
+            count = card.數量;
+            c3 = card.帶3 || 0;
+            c2 = card.帶2 || 0;
+            c1 = card.帶1 || 0;
+            let total = 0;
+            if (card.class === 'neutral') {
+                total = classData['all']?.count || 0;
+            } else {
+                total = classData[card.class]?.count || 0;
+            }
+            c0 = Math.max(0, total - c1 - c2 - c3);
         }
-        const c3 = card.帶3 || 0;
-        const c2 = card.帶2 || 0;
-        const c1 = card.帶1 || 0;
-        const c0 = Math.max(0, total - c1 - c2 - c3);
         const cardElement = document.createElement('div');
         cardElement.className = 'card-item';
         cardElement.innerHTML = `
@@ -245,7 +306,7 @@ function renderCardList() {
     </div>
     <div class="card-info">
         <span class="card-name">${card.名稱}</span>
-        <span class="card-count">${card.數量}</span>
+        <span class="card-count">${count}</span>
     </div>
     <div class="card-carry-info">
         <div class="carry-row">
@@ -260,8 +321,6 @@ function renderCardList() {
 `;
         cardList.appendChild(cardElement);
     });
-
-    // 移除載入狀態
     setTimeout(() => {
         cardList.classList.remove('loading');
     }, 100);
