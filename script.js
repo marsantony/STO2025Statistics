@@ -182,7 +182,10 @@ async function loadCardData() {
             class: classMap[card.class] || card.class,
             名稱: card.name || card.名稱,
             數量: card.count || card.數量,
-            imagehash: card.image_hash || card.imagehash
+            imagehash: card.image_hash || card.imagehash,
+            帶3: card.帶3 || 0,
+            帶2: card.帶2 || 0,
+            帶1: card.帶1 || 0,
         }));
         // 依照數量由大到小排序
         cardData.sort((a, b) => b.數量 - a.數量);
@@ -223,17 +226,38 @@ function renderCardList() {
     // 清空並重新渲染
     cardList.innerHTML = '';
     filteredCards.forEach(card => {
+        // 計算帶0
+        let total = 0;
+        if (card.class === 'neutral') {
+            total = classData['all']?.count || 0;
+        } else {
+            total = classData[card.class]?.count || 0;
+        }
+        const c3 = card.帶3 || 0;
+        const c2 = card.帶2 || 0;
+        const c1 = card.帶1 || 0;
+        const c0 = Math.max(0, total - c1 - c2 - c3);
         const cardElement = document.createElement('div');
         cardElement.className = 'card-item';
         cardElement.innerHTML = `
-            <div class="card-img-wrap">
-                <img src="images/cards/${card.imagehash}.png" alt="" class="card-full-img">
-            </div>
-            <div class="card-info">
-                <span class="card-name">${card.名稱}</span>
-                <span class="card-count">${card.數量}</span>
-            </div>
-        `;
+    <div class="card-img-wrap">
+        <img src="images/cards/${card.imagehash}.png" alt="" class="card-full-img">
+    </div>
+    <div class="card-info">
+        <span class="card-name">${card.名稱}</span>
+        <span class="card-count">${card.數量}</span>
+    </div>
+    <div class="card-carry-info">
+        <div class="carry-row">
+            <span class="trend-item trend-3">帶3：<span class="trend-num trend-num-3">${c3}</span></span>
+            <span class="trend-item trend-2">帶2：<span class="trend-num trend-num-2">${c2}</span></span>
+        </div>
+        <div class="carry-row">
+            <span class="trend-item trend-1">帶1：<span class="trend-num trend-num-1">${c1}</span></span>
+            <span class="trend-item trend-0">帶0：<span class="trend-num trend-num-0">${c0}</span></span>
+        </div>
+    </div>
+`;
         cardList.appendChild(cardElement);
     });
 
