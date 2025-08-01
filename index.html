@@ -44,7 +44,12 @@
         
         <div class="card-stats-section">
             <div class="card-stats-header">
-                <h3>卡片使用統計</h3>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <h3 style="margin: 0;">卡片使用統計</h3>
+                    <label id="includeNeutralLabel" style="display:none; align-items:center; gap:6px; background:#f5f6fa; border-radius:16px; padding:4px 12px; font-size:0.98em; cursor:pointer; border:1px solid #e0e0e0;">
+                        <input type="checkbox" id="includeNeutralCheckbox" style="vertical-align:middle; margin-right:4px; accent-color:#636e72;">加上中立牌
+                    </label>
+                </div>
                 <div class="stats-summary">
                     <span class="total-cards">總卡片種類: <span id="totalCardTypes">0</span></span>
                     <span class="shared-cards">共用卡片: <span id="sharedCards">0</span></span>
