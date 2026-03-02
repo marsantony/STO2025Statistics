@@ -1,3 +1,5 @@
+import { getFilteredCards as _getFilteredCards, arraysEqual as _arraysEqual, normalizeCardData, calculateC0 } from './data-utils.js';
+
 // 職業數據
 const classData = {
     all: {
@@ -114,33 +116,7 @@ function setupIncludeNeutralCheckbox() {
 }
 // 獲取過濾後的卡片數據
 function getFilteredCards() {
-    let filteredCards = cardData;
-    if (selectedClass !== 'all') {
-        filteredCards = cardData.filter(card => card.class === selectedClass);
-        if (includeNeutral && selectedClass !== 'neutral') {
-            const classNum = String(Object.entries(classMap).find(([k, v]) => v === selectedClass)?.[0]);
-            const neutralCards = cardData
-                .filter(card => card.class === 'neutral' && card.byclass && card.byclass[classNum])
-                .map(card => {
-                    const by = card.byclass[classNum];
-                    return {
-                        ...card,
-                        數量: by.count || 0,
-                        帶3: by.帶3 || 0,
-                        帶2: by.帶2 || 0,
-                        帶1: by.帶1 || 0,
-                        帶0: by.帶0 || 0,
-                        _isNeutralByClass: true,
-                        byclass: selectedClass // 添加 byclass 欄位
-                    };
-                })
-                .filter(card => card.數量 > 0); // 這裡過濾掉數量為0的
-            filteredCards = filteredCards.concat(neutralCards);
-        }
-    }
-    // 依照數量由大到小排序
-    filteredCards = filteredCards.slice().sort((a, b) => b.數量 - a.數量);
-    return filteredCards;
+    return _getFilteredCards(cardData, selectedClass, includeNeutral, classMap);
 }
 
 // 渲染職業卡片
@@ -233,20 +209,7 @@ async function loadCardData() {
         const response = await fetch('cards_data.json');
         let rawData = await response.json();
         // 將 class 數字轉換為 key，並欄位名稱標準化
-        cardData = rawData.map(card => ({
-            代碼: card.code || card.代碼,
-            class: classMap[card.class] || card.class,
-            名稱: card.name || card.名稱,
-            數量: card.count || card.數量,
-            imagehash: card.image_hash || card.imagehash,
-            帶3: card.帶3 || 0,
-            帶2: card.帶2 || 0,
-            帶1: card.帶1 || 0,
-            byclass: card.byclass || undefined // ← 加這行
-        }));
-
-        // 依照數量由大到小排序
-        cardData.sort((a, b) => b.數量 - a.數量);
+        cardData = normalizeCardData(rawData, classMap);
         updateCardStats(cardData);
         updateCardCharts('all');
         renderCardList();
@@ -285,7 +248,7 @@ function renderCardList() {
         } else {
             total = classData[card.class]?.count || 0;
         }
-        const c0 = Math.max(0, total - c1 - c2 - c3);
+        const c0 = calculateC0(total, c1, c2, c3);
         const cardElement = document.createElement('div');
         cardElement.className = 'card-item';
         cardElement.innerHTML = `
@@ -437,7 +400,7 @@ const chartColors = [
 ]
 
 function arraysEqual(a, b) {
-    return a.length === b.length && a.every((v, i) => v === b[i]);
+    return _arraysEqual(a, b);
 }
 
 // 更新圓餅圖
