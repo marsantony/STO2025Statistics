@@ -273,28 +273,19 @@ function renderCardList() {
     let filteredCards = getFilteredCards();
     cardList.innerHTML = '';
     filteredCards.forEach(card => {
-        let c3, c2, c1, c0, count;
+        const count = card.數量;
+        const c3 = card.帶3 || 0;
+        const c2 = card.帶2 || 0;
+        const c1 = card.帶1 || 0;
+        let total;
         if (card._isNeutralByClass) {
-            count = card.數量;
-            c3 = card.帶3 || 0;
-            c2 = card.帶2 || 0;
-            c1 = card.帶1 || 0;
-            let total = 0;
             total = classData[card.byclass]?.count || 0;
-            c0 = Math.max(0, total - c1 - c2 - c3);
+        } else if (card.class === 'neutral') {
+            total = classData['all']?.count || 0;
         } else {
-            count = card.數量;
-            c3 = card.帶3 || 0;
-            c2 = card.帶2 || 0;
-            c1 = card.帶1 || 0;
-            let total = 0;
-            if (card.class === 'neutral') {
-                total = classData['all']?.count || 0;
-            } else {
-                total = classData[card.class]?.count || 0;
-            }
-            c0 = Math.max(0, total - c1 - c2 - c3);
+            total = classData[card.class]?.count || 0;
         }
+        const c0 = Math.max(0, total - c1 - c2 - c3);
         const cardElement = document.createElement('div');
         cardElement.className = 'card-item';
         cardElement.innerHTML = `
@@ -445,25 +436,8 @@ const chartColors = [
   '#9966FF', '#FF9F40'
 ]
 
-// 更新圖表
-function updateCharts(selectedClass) {
-    if (selectedClass === 'all') {
-        // 顯示所有職業數據
-        updatePieChart(Object.values(classData));
-        updateBarChart(Object.values(classData));
-    } else {
-        // 顯示該職業所有牌的數量分布
-        const filteredCards = cardData.filter(card => card.class === selectedClass || card.class === 'shared');
-        if (filteredCards.length > 0) {
-            // 以卡片名稱為標籤，數量為值
-            updatePieChart(filteredCards.map(card => ({ name: card.名稱, count: card.數量, color: classData[selectedClass]?.color || '#888' })));
-            updateBarChart(filteredCards.map(card => ({ name: card.名稱, count: card.數量, color: classData[selectedClass]?.color || '#888' })));
-        } else {
-            // 若無卡片則顯示空
-            updatePieChart([]);
-            updateBarChart([]);
-        }
-    }
+function arraysEqual(a, b) {
+    return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
 // 更新圓餅圖
@@ -476,8 +450,7 @@ function updatePieChart(dataArray) {
     const currentLabels = pieChart.data.labels;
     const currentValues = pieChart.data.datasets[0].data;
 
-    if (JSON.stringify(currentLabels) === JSON.stringify(labels) &&
-        JSON.stringify(currentValues) === JSON.stringify(values)) {
+    if (arraysEqual(currentLabels, labels) && arraysEqual(currentValues, values)) {
         return; // 數據沒有改變，不需要更新
     }
 
@@ -497,8 +470,7 @@ function updateBarChart(dataArray) {
     const currentLabels = barChart.data.labels;
     const currentValues = barChart.data.datasets[0].data;
 
-    if (JSON.stringify(currentLabels) === JSON.stringify(labels) &&
-        JSON.stringify(currentValues) === JSON.stringify(values)) {
+    if (arraysEqual(currentLabels, labels) && arraysEqual(currentValues, values)) {
         return; // 數據沒有改變，不需要更新
     }
 
