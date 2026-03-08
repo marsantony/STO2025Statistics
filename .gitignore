@@ -5,3 +5,6 @@
 /.vs
 node_modules/
 coverage/
+
+# Claude Code working files
+tasks/
