@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>職業與卡牌統計儀表板</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://marsantony.github.io/shared/nav.css">
-    <style>body { padding-top: 56px; }</style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>職業與卡牌統計儀表板</h1>
-            
         </header>
 
         <div class="charts-section" id="classChartsSection">
@@ -27,10 +27,8 @@
             </div>
         </div>
 
-        <div class="class-cards-row">
-            <div class="class-cards" id="classCards">
-                <!-- 職業卡片將由JavaScript動態生成 -->
-            </div>
+        <div class="class-cards" id="classCards">
+            <!-- 職業卡片將由JavaScript動態生成 -->
         </div>
 
         <div class="charts-section" id="cardChartsSection">
@@ -43,13 +41,13 @@
                 <canvas id="cardBarChart"></canvas>
             </div>
         </div>
-        
+
         <div class="card-stats-section">
             <div class="card-stats-header">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                    <h3 style="margin: 0;">卡片使用統計</h3>
-                    <label id="includeNeutralLabel" style="display:none; align-items:center; gap:6px; background:#f5f6fa; border-radius:16px; padding:4px 12px; font-size:0.98em; cursor:pointer; border:1px solid #e0e0e0;">
-                        <input type="checkbox" id="includeNeutralCheckbox" style="vertical-align:middle; margin-right:4px; accent-color:#636e72;">加上中立牌
+                <div class="card-stats-title-row">
+                    <h3>卡片使用統計</h3>
+                    <label id="includeNeutralLabel" class="neutral-toggle">
+                        <input type="checkbox" id="includeNeutralCheckbox">加上中立牌
                     </label>
                 </div>
                 <div class="stats-summary">
@@ -64,11 +62,11 @@
             </div>
         </div>
     </div>
-    <footer style="margin-top:40px; text-align:center; color:#888; font-size:0.95em; line-height:1.7;">
+    <div class="attribution">
         資料整理／分析：Mars Liu (姬柊雪菜我老婆)<br>
         資料來源：Shadowverse World Beyond（Cygames）<br>
-        卡牌圖像© Cygames，僅供非營利學術分析使用
-    </footer>
+        卡牌圖像&copy; Cygames，僅供非營利學術分析使用
+    </div>
     <script src="https://marsantony.github.io/shared/shared.js"></script>
     <script type="module" src="script.js"></script>
 </body>

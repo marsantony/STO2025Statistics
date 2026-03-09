@@ -1,4 +1,4 @@
-import { getFilteredCards as _getFilteredCards, arraysEqual as _arraysEqual, normalizeCardData, calculateC0 } from './data-utils.js';
+import { getFilteredCards as _getFilteredCards, normalizeCardData, calculateC0 } from './data-utils.js';
 
 // 職業數據
 const classData = {
@@ -71,6 +71,9 @@ const classData = {
 let selectedClass = 'all';
 let includeNeutral = false;
 
+// 卡片資料
+let cardData = [];
+
 // 圖表實例
 let pieChart = null;
 let barChart = null;
@@ -89,6 +92,22 @@ const classMap = {
     7: 'nemesis'
 };
 
+// 只取有職業的 key（排除 all 和 neutral）
+const classKeys = Object.keys(classData).filter(k => k !== 'all' && k !== 'neutral');
+
+const chartColors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'
+];
+
+// DOM 快取
+const toggleEl = document.getElementById('includeNeutralLabel');
+const checkboxEl = document.getElementById('includeNeutralCheckbox');
+const cardListEl = document.getElementById('cardList');
+const totalCardTypesEl = document.getElementById('totalCardTypes');
+const sharedCardsEl = document.getElementById('sharedCards');
+const cardPieTitleEl = document.getElementById('cardPieTitle');
+const cardBarTitleEl = document.getElementById('cardBarTitle');
+
 // 初始化應用程式
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -97,23 +116,22 @@ document.addEventListener('DOMContentLoaded', function () {
 function initializeApp() {
     renderClassCards();
     createCharts();
-    loadCardData(); // 載入卡片數據
+    loadCardData();
     setupIncludeNeutralCheckbox();
 }
 
 function setupIncludeNeutralCheckbox() {
-    const label = document.getElementById('includeNeutralLabel');
-    const checkbox = document.getElementById('includeNeutralCheckbox');
-    label.style.display = 'none';
-    checkbox.checked = false;
-    includeNeutral = false;
-    checkbox.addEventListener('change', function() {
-        includeNeutral = checkbox.checked;
-        renderCardList();
-        updateCardStats(getFilteredCards());
-        updateCardCharts(selectedClass); // ← 新增這行
+    toggleEl.style.display = 'none';
+    checkboxEl.checked = false;
+    checkboxEl.addEventListener('change', function() {
+        includeNeutral = checkboxEl.checked;
+        const filtered = getFilteredCards();
+        renderCardList(filtered);
+        updateCardStats(filtered);
+        updateCardCharts(filtered, selectedClass);
     });
 }
+
 // 獲取過濾後的卡片數據
 function getFilteredCards() {
     return _getFilteredCards(cardData, selectedClass, includeNeutral, classMap);
@@ -143,7 +161,6 @@ function renderClassCards() {
 
 // 選擇職業
 function selectClass(className) {
-    // 檢查是否已經選中
     const currentSelected = document.querySelector('.class-card.selected');
     const targetCard = document.querySelector(`[data-class="${className}"]`);
 
@@ -152,89 +169,71 @@ function selectClass(className) {
         return;
     }
 
-    // 移除所有選中狀態
-    document.querySelectorAll('.class-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-
-    // 添加選中狀態
-    if (targetCard) {
-        targetCard.classList.add('selected');
-    }
+    // 移除選中狀態，添加新的
+    if (currentSelected) currentSelected.classList.remove('selected');
+    if (targetCard) targetCard.classList.add('selected');
 
     // 更新選中的職業
     selectedClass = className;
     // 顯示/隱藏勾選框
-    const label = document.getElementById('includeNeutralLabel');
     if (className !== 'all' && className !== 'neutral') {
-        label.style.display = 'flex';
+        toggleEl.style.display = 'flex';
     } else {
-        label.style.display = 'none';
+        toggleEl.style.display = 'none';
         includeNeutral = false;
-        document.getElementById('includeNeutralCheckbox').checked = false;
+        checkboxEl.checked = false;
     }
-    // 根據選擇的職業過濾卡片
-    updateCardStats(getFilteredCards());
-    updateCardCharts(className);
-    renderCardList();
+    // 根據選擇的職業過濾卡片，計算一次傳給所有函式
+    const filtered = getFilteredCards();
+    updateCardStats(filtered);
+    updateCardCharts(filtered, className);
+    renderCardList(filtered);
 }
 
-function updateCardCharts(selectedClass) {
-    let filteredCards = getFilteredCards(); // ← 改這裡
+function updateCardCharts(filteredCards, cls) {
     const pieLabels = filteredCards.map(card => card.名稱);
     const pieData = filteredCards.map(card => card.數量);
-    // 顏色：全部時用 chartColors，單職業時用職業色
-    const pieColors = selectedClass === 'all'
+    const pieColors = cls === 'all'
         ? filteredCards.map((_, i) => chartColors[i % chartColors.length])
-        : filteredCards.map(card => classData[selectedClass]?.color || '#888');
+        : filteredCards.map(() => classData[cls]?.color || '#888');
     cardPieChart.data.labels = pieLabels;
     cardPieChart.data.datasets[0].data = pieData;
     cardPieChart.data.datasets[0].backgroundColor = pieColors;
     cardPieChart.update('none');
-    // 長條圖同理
     cardBarChart.data.labels = pieLabels;
     cardBarChart.data.datasets[0].data = pieData;
     cardBarChart.data.datasets[0].backgroundColor = pieColors;
     cardBarChart.data.datasets[0].borderColor = pieColors;
     cardBarChart.update('none');
-    // 標題
-    document.getElementById('cardPieTitle').textContent = selectedClass === 'all' ? '全部牌分布圓餅圖' : `${classData[selectedClass]?.name || ''}牌分布圓餅圖`;
-    document.getElementById('cardBarTitle').textContent = selectedClass === 'all' ? '全部牌統計圖表' : `${classData[selectedClass]?.name || ''}牌統計圖表`;
+    cardPieTitleEl.textContent = cls === 'all' ? '全部牌分布圓餅圖' : `${classData[cls]?.name || ''}牌分布圓餅圖`;
+    cardBarTitleEl.textContent = cls === 'all' ? '全部牌統計圖表' : `${classData[cls]?.name || ''}牌統計圖表`;
 }
 
 // 載入卡片數據
 async function loadCardData() {
     try {
-        // 這裡您需要提供實際的JSON檔案路徑
         const response = await fetch('cards_data.json');
-        let rawData = await response.json();
-        // 將 class 數字轉換為 key，並欄位名稱標準化
+        const rawData = await response.json();
         cardData = normalizeCardData(rawData, classMap);
         updateCardStats(cardData);
-        updateCardCharts('all');
-        renderCardList();
+        updateCardCharts(cardData, 'all');
+        renderCardList(cardData);
     } catch (error) {
         console.log('無法載入卡片數據');
-        // 使用示例數據
         updateCardStats([]);
     }
 }
 
 // 更新卡片統計
 function updateCardStats(filteredCards) {
-    const totalCardTypes = filteredCards.length;
-    const sharedCards = filteredCards.filter(card => card.數量 > 1).length;
-
-    document.getElementById('totalCardTypes').textContent = totalCardTypes;
-    document.getElementById('sharedCards').textContent = sharedCards;
+    totalCardTypesEl.textContent = filteredCards.length;
+    sharedCardsEl.textContent = filteredCards.filter(card => card.數量 > 1).length;
 }
 
 // 渲染卡片列表
-function renderCardList() {
-    const cardList = document.getElementById('cardList');
-    cardList.classList.add('loading');
-    let filteredCards = getFilteredCards();
-    cardList.innerHTML = '';
+function renderCardList(filteredCards) {
+    cardListEl.classList.add('loading');
+    const fragment = document.createDocumentFragment();
     filteredCards.forEach(card => {
         const count = card.數量;
         const c3 = card.帶3 || 0;
@@ -270,11 +269,13 @@ function renderCardList() {
         </div>
     </div>
 `;
-        cardList.appendChild(cardElement);
+        fragment.appendChild(cardElement);
     });
-    setTimeout(() => {
-        cardList.classList.remove('loading');
-    }, 100);
+    cardListEl.innerHTML = '';
+    cardListEl.appendChild(fragment);
+    requestAnimationFrame(() => {
+        cardListEl.classList.remove('loading');
+    });
 }
 
 // 創建圖表
@@ -288,30 +289,24 @@ function createCharts() {
 // 創建圓餅圖
 function createPieChart() {
     const ctx = document.getElementById('pieChart').getContext('2d');
-    // 只取非 all 和非 neutral 的職業
-    const classKeys = Object.keys(classData).filter(k => k !== 'all' && k !== 'neutral');
-    const data = {
-        labels: classKeys.map(k => classData[k].name),
-        datasets: [{
-            data: classKeys.map(k => classData[k].count),
-            backgroundColor: classKeys.map(k => classData[k].color),
-            borderWidth: 2,
-            borderColor: '#ffffff'
-        }]
-    };
-    const config = {
+    pieChart = new Chart(ctx, {
         type: 'pie',
-        data: data,
+        data: {
+            labels: classKeys.map(k => classData[k].name),
+            datasets: [{
+                data: classKeys.map(k => classData[k].count),
+                backgroundColor: classKeys.map(k => classData[k].color),
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: {
-                        font: { size: 12 },
-                        padding: 20
-                    }
+                    labels: { font: { size: 12 }, padding: 20 }
                 },
                 tooltip: {
                     callbacks: {
@@ -324,52 +319,34 @@ function createPieChart() {
                 }
             }
         }
-    };
-    pieChart = new Chart(ctx, config);
+    });
 }
 
 // 創建長條圖
 function createBarChart() {
     const ctx = document.getElementById('barChart').getContext('2d');
-    // 只取非 all 和非 neutral 的職業
-    const classKeys = Object.keys(classData).filter(k => k !== 'all' && k !== 'neutral');
-    const data = {
-        labels: classKeys.map(k => classData[k].name),
-        datasets: [{
-            label: '數量',
-            data: classKeys.map(k => classData[k].count),
-            backgroundColor: classKeys.map(k => classData[k].color),
-            borderColor: classKeys.map(k => classData[k].color),
-            borderWidth: 1
-        }]
-    };
-    const config = {
+    barChart = new Chart(ctx, {
         type: 'bar',
-        data: data,
+        data: {
+            labels: classKeys.map(k => classData[k].name),
+            datasets: [{
+                label: '數量',
+                data: classKeys.map(k => classData[k].count),
+                backgroundColor: classKeys.map(k => classData[k].color),
+                borderColor: classKeys.map(k => classData[k].color),
+                borderWidth: 1
+            }]
+        },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
+                y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.1)' } },
+                x: { grid: { display: false } }
             },
-            plugins: {
-                legend: {
-                    display: false
-                }
-            }
+            plugins: { legend: { display: false } }
         }
-    };
-    barChart = new Chart(ctx, config);
+    });
 }
 
 // 創建卡片圓餅圖
@@ -390,56 +367,4 @@ function createCardBarChart() {
         data: { labels: [], datasets: [{ label: '卡片數量', data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
-}
-
-const chartColors = [
-  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-  '#C9CBCF', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-  '#FF9F40', '#C9CBCF', '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-  '#9966FF', '#FF9F40'
-]
-
-function arraysEqual(a, b) {
-    return _arraysEqual(a, b);
-}
-
-// 更新圓餅圖
-function updatePieChart(dataArray) {
-    const labels = dataArray.map(data => data.name);
-    const values = dataArray.map(data => data.count);
-    const colors = dataArray.map(data => data.color);
-
-    // 檢查數據是否真的改變了
-    const currentLabels = pieChart.data.labels;
-    const currentValues = pieChart.data.datasets[0].data;
-
-    if (arraysEqual(currentLabels, labels) && arraysEqual(currentValues, values)) {
-        return; // 數據沒有改變，不需要更新
-    }
-
-    pieChart.data.labels = labels;
-    pieChart.data.datasets[0].data = values;
-    pieChart.data.datasets[0].backgroundColor = colors;
-    pieChart.update('none'); // 使用 'none' 模式避免動畫
-}
-
-// 更新長條圖
-function updateBarChart(dataArray) {
-    const labels = dataArray.map(data => data.name);
-    const values = dataArray.map(data => data.count);
-    const colors = dataArray.map(data => data.color);
-
-    // 檢查數據是否真的改變了
-    const currentLabels = barChart.data.labels;
-    const currentValues = barChart.data.datasets[0].data;
-
-    if (arraysEqual(currentLabels, labels) && arraysEqual(currentValues, values)) {
-        return; // 數據沒有改變，不需要更新
-    }
-
-    barChart.data.labels = labels;
-    barChart.data.datasets[0].data = values;
-    barChart.data.datasets[0].backgroundColor = colors;
-    barChart.data.datasets[0].borderColor = colors;
-    barChart.update('none'); // 使用 'none' 模式避免動畫
 }
