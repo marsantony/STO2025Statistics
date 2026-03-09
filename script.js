@@ -273,9 +273,9 @@ function renderCardList(filteredCards) {
     });
     cardListEl.innerHTML = '';
     cardListEl.appendChild(fragment);
-    requestAnimationFrame(() => {
+    setTimeout(() => {
         cardListEl.classList.remove('loading');
-    });
+    }, 100);
 }
 
 // 創建圖表
